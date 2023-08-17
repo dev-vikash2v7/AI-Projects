@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block css %}
+<link rel="stylesheet" href='{% static "tic tac.css" %}'>
+{% endblock css %}
+
+{% block body %}
+
+    <h2 class="text-center text-primary" id="room"></h2>
+    <h3 class="text-center text-white" id="sign"></h3>
+<div class="text-center" id="box">
+    <header>
+        <h1>Play Tic Tac Toe</h1>
+    </header>
+    <div id="message"></div>
+    <ul id="gameBoard">
+        <li class="tic" id="0"></li>
+        <li class="tic" id="1"></li>
+        <li class="tic" id="2"></li>
+        <li class="tic" id="3"></li>
+        <li class="tic" id="4"></li>
+        <li class="tic" id="5"></li>
+        <li class="tic" id="6"></li>
+        <li class="tic" id="7"></li>
+        <li class="tic" id="8"></li>
+    </ul>
+    <div class="clearfix"></div>
+    <footer>
+        <button id="reset" onclick="reset()">Reset</button>
+    </footer>
+</div>
+
+
+
+{% endblock body %}
+
+
+
+{% block js %}
+<!-- <script src="{% static 'game.js' %}"></script> -->
+
+<script>
+
+    var room_code = '{{ room_code }}'
+    var username = '{{ username }}'
+    var player = username[0]
+
+    document.getElementById('sign').innerHTML=`Your Are '<b>${player}</b>'`
+    document.getElementById('room').innerHTML=`Room Name : <b>${room_code}</b>`
+   
+    let socket = new WebSocket('ws://localhost:8000/ws/game/' + room_code)
+
+    socket.onopen = function (e) {
+        console.log('connected')
+    }
+
+    // function swal(a, b, c) {
+    //     alert(a + ' ' + b + ' ' + c + ' ')
+    // }
+
+    let gameState = ['','','','','','','','','']
+
+    let elementArray = document.querySelectorAll('.tic')
+
+    elementArray.forEach(function (elem) {
+        elem.addEventListener('click', function (event) {
+            // console.log(event.path[0].id, player)
+            setText(parseInt(event.path[0].id), player)
+        })
+    })
+
+
+    function checkGameEnd() {
+        var count = 0
+        gameState.map((game) =>{
+            if(game != ''){
+                count++
+            }
+
+        })
+        if(count >=9){
+            var data = {'type':'over'}
+            socket.send(JSON.stringify({ data }))
+            swal('DRAW!!', 'no one wins', 'warning')
+
+        }
+    }
+
+    function checkWon(value, player) {
+        // console.log()
+      
+        if (
+            gameState[0] == player && gameState[1] == player && gameState[2] == player ||
+            gameState[3] == player &&  gameState[4]  == player && gameState[5] == player ||
+            gameState[6] == player && gameState[7] ==player &&  gameState[8] == player ||
+
+            gameState[0] == player && gameState[3] == player &&  gameState[6] == player ||
+            gameState[1] ==player &&  gameState[4] == player && gameState[7] == player ||
+            gameState[2] == player && gameState[5] ==player &&  gameState[8] == player ||
+
+            gameState[0] == player && gameState[4] == player && gameState[8] == player ||
+            gameState[2] == player &&  gameState[4] == player && gameState[6] == player
+        ) {
+            var data = { 'type': 'end', 'player': player }
+            swal('good job!', 'you won', 'success')
+            socket.send(JSON.stringify({ data }))
+        }
+        checkGameEnd()
+
+    }
+
+    function setText(index, value) {
+        var data = {
+            'player': player,
+            'index': index,
+            'type': 'running'
+        }
+
+        // console.log('setText data=', data)
+        //data = {"data":{"player":"s","index":0,"type":"running"}}
+
+        if (gameState[index] == '') {
+
+            gameState[index] = value
+            elementArray[index].innerHTML = value
+
+            socket.send( JSON.stringify({ data }) ) // send data to the recieve fun in consumers
+            checkWon(value, player)
+        }
+
+        else {
+            alert('The place has been filled . Try another')
+        }
+    }
+
+
+    function setAnotherUserText(index, value) {
+        gameState[index] = value
+        elementArray[index].innerHTML = value
+    }
+
+
+    // recieve data from the consumers run_game function
+    socket.onmessage = function (e) {
+        // '{payload : {"player":"s","index":0,"type":"running"}}'
+        var data = JSON.parse(e.data)
+
+        console.log('onmessage data =', data)
+        // data : {payload: {player: "s", index: 0, type: "running"}}
+
+        var type = data.payload.type
+        var opponent = data.payload.player
+        var index = data.payload.index
+
+        if (type == 'end' && opponent !== player) {
+            swal('sorry!!', 'you lost', 'error')
+        }
+
+        else if (type == 'over') {
+            swal('DRAW!!', 'no one wins', 'warning')
+            return;
+        }
+
+        else if (type == 'running' && opponent != player) {
+
+            setAnotherUserText(parseInt(index), opponent)
+        }
+    }
+
+
+
+
+
+
+
+    function reset(){
+        location.reload()
+    }
+
+
+
+    socket.onclose = function (e) {
+        console.log('dissconnected')
+    }
+
+
+</script>
+
+{% endblock js %}

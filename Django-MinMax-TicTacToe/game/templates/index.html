@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+
+{% block css %}
+<link rel="stylesheet" href='{% static "tic tac.css" %}'>
+{% endblock css %}
+
+{% block body %}
+
+<!-- {% if messages %}
+{% for message in messages %} -->
+<!-- <div class="alert alert-light">
+  {{ message }}
+</div> -->
+<!-- {% endfor %}
+{% endif %} -->
+
+<h1 class="text-center mt-4">Welcome To The Game</h1>
+<form class="form-inline" method="POST">
+{% csrf_token %}
+
+
+        <div class="form-group row mt-3">
+
+          <label for="staticUser" class="col-sm-2 col-form-label">Username</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" id="staticUser" placeholder="enter Your name" name='username'>
+          </div>
+
+          <label for="inputPassword" class="col-sm-2 col-form-label">Room Code</label>
+          <div class="col-sm-10 p-3">
+            <input type="text" class="form-control" id="inputPassword" placeholder="enter room code" name="room-code">
+          </div>
+
+          <select class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref" name='option'>
+            <option selected >Choose...</option>
+            <option value="1">Join Room</option>
+            <option value="2">Create Room</option>
+          </select>
+
+
+        <button type="submit" class="btn btn-primary my-1">Start Game</button>
+      </div>
+
+  </form>
+{% endblock body %}
